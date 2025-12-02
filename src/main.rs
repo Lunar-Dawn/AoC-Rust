@@ -4,6 +4,7 @@ use std::process;
 mod util;
 
 mod day1;
+mod day2;
 
 fn run(part1: util::Part, part2: util::Part, file_name: String) {
     let path = Path::new("input").join(file_name);
@@ -18,7 +19,8 @@ fn run(part1: util::Part, part2: util::Part, file_name: String) {
 }
 
 fn main() {
-    let days: [(util::Part, util::Part); _] = [(day1::part1, day1::part2)];
+    let days: [(util::Part, util::Part); _] =
+        [(day1::part1, day1::part2), (day2::part1, day2::part2)];
 
     let args: Vec<String> = std::env::args().collect();
 
