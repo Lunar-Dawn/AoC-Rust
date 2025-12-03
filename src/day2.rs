@@ -2,8 +2,8 @@ use std::path::PathBuf;
 
 use crate::util;
 
-pub fn part1(file_name: &PathBuf) -> util::Result<String> {
-    let input = std::fs::read_to_string(file_name)?.trim().to_string();
+pub fn part1(path: &PathBuf) -> util::Result<String> {
+    let input = std::fs::read_to_string(path)?.trim().to_string();
 
     let mut total = 0;
 
@@ -46,8 +46,8 @@ fn is_repeated(id: u64, pattern_length: u32) -> bool {
     true
 }
 
-pub fn part2(file_name: &PathBuf) -> util::Result<String> {
-    let input = std::fs::read_to_string(file_name)?.trim().to_string();
+pub fn part2(path: &PathBuf) -> util::Result<String> {
+    let input = std::fs::read_to_string(path)?.trim().to_string();
 
     let mut total = 0;
 
