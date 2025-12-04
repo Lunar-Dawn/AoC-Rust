@@ -6,6 +6,7 @@ mod util;
 mod day1;
 mod day2;
 mod day3;
+mod day4;
 
 fn run(part1: util::Part, part2: util::Part, file_name: String) {
     let path = Path::new("input").join(file_name);
@@ -24,6 +25,7 @@ fn main() {
         (day1::part1, day1::part2),
         (day2::part1, day2::part2),
         (day3::part1, day3::part2),
+        (day4::part1, day4::part2),
     ];
 
     let args: Vec<String> = std::env::args().collect();
