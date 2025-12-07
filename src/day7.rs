@@ -34,7 +34,7 @@ pub fn solve(path: &PathBuf) -> (usize, usize) {
         }
     }
 
-    (num_splits, state.iter().sum::<usize>())
+    (num_splits, state.iter().sum())
 }
 
 pub fn part1(path: &PathBuf) -> util::Result<String> {
