@@ -3,15 +3,16 @@ use std::process;
 
 mod util;
 
-mod day1;
-mod day2;
-mod day3;
-mod day4;
-mod day5;
-mod day6;
-mod day7;
-mod day8;
-mod day9;
+mod day01;
+mod day02;
+mod day03;
+mod day04;
+mod day05;
+mod day06;
+mod day07;
+mod day08;
+mod day09;
+mod day10;
 
 fn run(part1: util::Part, part2: util::Part, file_name: String) {
     let path = Path::new("input").join(file_name);
@@ -27,15 +28,16 @@ fn run(part1: util::Part, part2: util::Part, file_name: String) {
 
 fn main() {
     let days: [(util::Part, util::Part); _] = [
-        (day1::part1, day1::part2),
-        (day2::part1, day2::part2),
-        (day3::part1, day3::part2),
-        (day4::part1, day4::part2),
-        (day5::part1, day5::part2),
-        (day6::part1, day6::part2),
-        (day7::part1, day7::part2),
-        (day8::part1, day8::part2),
-        (day9::part1, day9::part2),
+        (day01::part1, day01::part2),
+        (day02::part1, day02::part2),
+        (day03::part1, day03::part2),
+        (day04::part1, day04::part2),
+        (day05::part1, day05::part2),
+        (day06::part1, day06::part2),
+        (day07::part1, day07::part2),
+        (day08::part1, day08::part2),
+        (day09::part1, day09::part2),
+        (day10::part1, day10::part2),
     ];
 
     let args: Vec<String> = std::env::args().collect();
