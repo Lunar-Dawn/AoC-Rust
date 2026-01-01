@@ -5,7 +5,6 @@ use std::path::PathBuf;
 use crate::util;
 
 struct Present {
-    shape: Vec<Vec<bool>>,
     size: u64,
     rect_size: u64,
 }
@@ -23,11 +22,7 @@ impl Present {
             .map(|l: &Vec<bool>| l.iter().map(|x| *x as u64).sum::<u64>())
             .sum::<u64>();
         let rect_size = shape.len() as u64 * shape[0].len() as u64;
-        Present {
-            shape,
-            size,
-            rect_size,
-        }
+        Present { size, rect_size }
     }
 }
 
@@ -72,9 +67,8 @@ pub fn part1(path: &PathBuf) -> util::Result<String> {
     let mut total = 0;
 
     loop {
-        let line = match lines.next() {
-            None => break,
-            Some(l) => l,
+        let Some(line) = lines.next() else {
+            break;
         };
 
         if !line.contains('x') {
