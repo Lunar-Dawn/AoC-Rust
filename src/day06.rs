@@ -1,91 +1,93 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
+use crate::dyn_result::DynResult;
+use crate::runner;
 
-use crate::util;
+runner!();
 
-pub fn part1(path: &PathBuf) -> util::Result<String> {
-    let file = File::open(path)?;
-    let reader = BufReader::new(file);
-    let lines = reader.lines();
-
-    let rows: Vec<_> = lines.map(|l| l.unwrap()).collect();
-
-    let numbers: Vec<_> = rows
-        .iter()
-        .take(rows.len() - 1)
-        .map(|l| {
-            l.split_whitespace()
-                .map(|s| s.parse::<u64>().unwrap())
-                .collect::<Vec<_>>()
-        })
-        .collect();
-
-    let operations: Vec<_> = rows
-        .last()
-        .unwrap()
-        .split_whitespace()
-        .map(|s| String::from(s))
-        .collect();
-
-    let mut total = 0;
-    for i in 0..operations.len() {
-        let operation = &operations[i];
-        let column = numbers.iter().map(|r| &r[i]);
-        total += match operation.as_str() {
-            "+" => column.sum::<u64>(),
-            "*" => column.product::<u64>(),
-            _ => panic!("unknown operation {}", operation),
+enum Operation {
+    Addition,
+    Multiplication,
+}
+struct Problem {
+    numbers_normal: Vec<u64>,
+    numbers_cephalopod: Vec<u64>,
+    operator: Operation,
+}
+impl Problem {
+    fn evaluate1(&self) -> u64 {
+        match self.operator {
+            Operation::Addition => self.numbers_normal.iter().sum(),
+            Operation::Multiplication => self.numbers_normal.iter().product(),
         }
     }
-
-    Ok(total.to_string())
+    fn evaluate2(&self) -> u64 {
+        match self.operator {
+            Operation::Addition => self.numbers_cephalopod.iter().sum(),
+            Operation::Multiplication => self.numbers_cephalopod.iter().product(),
+        }
+    }
 }
 
-pub fn part2(path: &PathBuf) -> util::Result<String> {
-    let file = File::open(path)?;
-    let reader = BufReader::new(file);
-    let lines = reader.lines();
+fn parse(input: &str) -> DynResult<Vec<Problem>> {
+    let mut lines: Vec<_> = input.lines().collect();
+    let Some(operator_row) = lines.pop() else {
+        return Err("Missing 'operator' line".into());
+    };
 
-    let mut rows: Vec<_> = lines.map(|l| l.unwrap()).collect();
-    let operation_row = rows.pop().unwrap();
     let mut current_operation_start_pos = 0;
+    let mut problems = Vec::new();
 
-    let mut total = 0;
-    while current_operation_start_pos < operation_row.len() {
-        let operator = operation_row[current_operation_start_pos..]
+    while current_operation_start_pos < operator_row.len() {
+        let operator = operator_row[current_operation_start_pos..]
             .chars()
             .next()
-            .unwrap();
+            .ok_or("Scan overran operator line length")?;
+        let operator = match operator {
+            '+' => Operation::Addition,
+            '*' => Operation::Multiplication,
+            op => return Err(format!("Unknown operator {op}").into()),
+        };
+
         let column_width =
-            match operation_row[current_operation_start_pos + 1..].find(|c| c == '+' || c == '*') {
+            match operator_row[current_operation_start_pos + 1..].find(|c| c == '+' || c == '*') {
                 Some(column_width) => column_width,
-                None => operation_row.len() - current_operation_start_pos,
+                None => operator_row.len() - current_operation_start_pos,
             };
 
-        let numbers = rows
+        let number_strings = lines
             .iter()
             .map(|l| &l[current_operation_start_pos..current_operation_start_pos + column_width])
             .collect::<Vec<_>>();
         current_operation_start_pos += column_width + 1;
 
-        let (mut result, operation): (u64, fn(u64, u64) -> u64) = match operator {
-            '+' => (0, |l, r| l + r),
-            '*' => (1, |l, r| l * r),
-            _ => panic!("unknown operator {}", operator),
-        };
+        let numbers_cephalopod = (0..column_width)
+            .into_iter()
+            .map(|i| {
+                number_strings
+                    .iter()
+                    .map(|s| s.chars().nth(i).unwrap_or(' '))
+                    .collect::<String>()
+                    .trim()
+                    .parse()
+            })
+            .collect::<Result<_, _>>()?;
 
-        for i in 0..column_width {
-            let num = numbers
-                .iter()
-                .map(|s| s.chars().nth(i).unwrap())
-                .filter(|c| c.is_numeric())
-                .collect::<String>()
-                .parse::<u64>()?;
-            result = operation(result, num);
-        }
-        total += result;
+        problems.push(Problem {
+            numbers_normal: number_strings
+                .into_iter()
+                .map(|l| l.trim().parse())
+                .collect::<Result<_, _>>()?,
+            numbers_cephalopod,
+            operator,
+        })
     }
 
-    Ok(total.to_string())
+    Ok(problems)
+}
+
+fn part1(problems: &Vec<Problem>) -> u64 {
+    problems.iter().map(|p| p.evaluate1()).sum()
+}
+
+fn part2(problems: &Vec<Problem>) -> u64 {
+    problems.iter().map(|p| p.evaluate2()).sum()
 }

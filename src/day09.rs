@@ -1,9 +1,9 @@
 use std::cmp::{max, min};
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
 
-use crate::util;
+use crate::dyn_result::DynResult;
+use crate::runner;
+
+runner!();
 
 #[derive(Clone, Copy)]
 struct Point {
@@ -18,41 +18,48 @@ impl Point {
         ((self.x - other.x).abs() + 1) * ((self.y - other.y).abs() + 1)
     }
 }
+fn parse_point(string: &str) -> DynResult<Point> {
+    let offsets: Vec<_> = string
+        .split(',')
+        .map(|s| s.parse::<i64>())
+        .collect::<Result<_, _>>()?;
 
-fn parse_points(path: &PathBuf) -> Vec<Point> {
-    fn parse_point(string: &str) -> Point {
-        let offsets: Vec<_> = string.split(',').map(|s| s.parse().unwrap()).collect();
-
-        Point::new(offsets[0], offsets[1])
-    }
-
-    let file = File::open(path).unwrap();
-    let reader = BufReader::new(file);
-    let lines = reader.lines();
-
-    lines
-        .map(|l| l.unwrap())
-        .map(|l| parse_point(l.as_str()))
-        .collect()
-}
-
-pub fn part1(path: &PathBuf) -> util::Result<String> {
-    let points = parse_points(path);
-
-    let mut max_area = 0;
-    for p1 in &points {
-        for p2 in &points {
-            let area = p1.area(p2);
-            max_area = max(max_area, area);
-        }
-    }
-
-    Ok(max_area.to_string())
+    Ok(Point::new(offsets[0], offsets[1]))
 }
 
 struct Line {
     start: Point,
     end: Point,
+}
+
+struct Input {
+    points: Vec<Point>,
+    lines: Vec<Line>,
+}
+fn parse(input: &str) -> DynResult<Input> {
+    let points: Vec<_> = input.lines().map(parse_point).collect::<Result<_, _>>()?;
+
+    let mut lines = Vec::new();
+    for i in 0..points.len() {
+        lines.push(Line {
+            start: points[i],
+            end: points[(i + 1) % points.len()],
+        })
+    }
+
+    Ok(Input { points, lines })
+}
+
+fn part1(input: &Input) -> i64 {
+    let mut max_area = 0;
+    for p1 in &input.points {
+        for p2 in &input.points {
+            let area = p1.area(p2);
+            max_area = max(max_area, area);
+        }
+    }
+
+    max_area
 }
 fn test_rectangle(p1: &Point, p2: &Point, lines: &Vec<Line>) -> Option<i64> {
     let min_x = min(p1.x, p2.x);
@@ -83,26 +90,16 @@ fn test_rectangle(p1: &Point, p2: &Point, lines: &Vec<Line>) -> Option<i64> {
     Some(p1.area(p2))
 }
 
-pub fn part2(path: &PathBuf) -> util::Result<String> {
-    let points = parse_points(path);
-
-    let mut lines = Vec::new();
-    for i in 0..points.len() {
-        lines.push(Line {
-            start: points[i],
-            end: points[(i + 1) % points.len()],
-        })
-    }
-
+fn part2(input: &Input) -> i64 {
     let mut max_area = 0;
-    for point_1 in 0..points.len() {
-        for point_2 in (point_1 + 1)..points.len() {
-            match test_rectangle(&points[point_1], &points[point_2], &lines) {
+    for point_1 in 0..input.points.len() {
+        for point_2 in (point_1 + 1)..input.points.len() {
+            match test_rectangle(&input.points[point_1], &input.points[point_2], &input.lines) {
                 None => continue,
                 Some(area) => max_area = max(max_area, area),
             }
         }
     }
 
-    Ok(max_area.to_string())
+    max_area
 }

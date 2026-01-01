@@ -1,10 +1,14 @@
 use std::collections::HashSet;
 use std::fmt;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
 
-use crate::util;
+use crate::dyn_result::DynResult;
+use crate::runner;
+
+runner!();
+
+fn parse(input: &str) -> DynResult<Wall> {
+    Ok(Wall::new(input.lines().collect()))
+}
 
 type Position = (usize, usize);
 #[derive(Clone)]
@@ -22,6 +26,7 @@ impl Space {
     }
 }
 
+#[derive(Clone)]
 struct Wall {
     width: usize,
     height: usize,
@@ -29,7 +34,7 @@ struct Wall {
 }
 
 impl Wall {
-    fn new(lines: Vec<String>) -> Wall {
+    fn new(lines: Vec<&str>) -> Wall {
         let width = lines[0].len();
         let height = lines.len();
 
@@ -143,29 +148,18 @@ impl fmt::Display for Wall {
     }
 }
 
-pub fn part1(path: &PathBuf) -> util::Result<String> {
-    let file = File::open(path)?;
-    let reader = BufReader::new(file);
-
-    let lines: Vec<String> = reader.lines().map(|l| l.unwrap()).collect();
-
-    let wall = Wall::new(lines);
+fn part1(wall: &Wall) -> usize {
     let movable = wall
         .spaces
         .iter()
         .filter(|s| s.removable())
         .collect::<Vec<_>>();
 
-    Ok(movable.len().to_string())
+    movable.len()
 }
 
-pub fn part2(path: &PathBuf) -> util::Result<String> {
-    let file = File::open(path)?;
-    let reader = BufReader::new(file);
-
-    let lines: Vec<String> = reader.lines().map(|l| l.unwrap()).collect();
-
-    let mut wall = Wall::new(lines);
+fn part2(wall: &Wall) -> u64 {
+    let mut wall = wall.clone();
 
     let mut removable: HashSet<Position> = (0..wall.height)
         .flat_map(|x| (0..wall.width).map(move |y| (x, y)))
@@ -184,5 +178,5 @@ pub fn part2(path: &PathBuf) -> util::Result<String> {
         num_removals += 1;
     }
 
-    Ok(num_removals.to_string())
+    num_removals
 }

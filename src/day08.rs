@@ -1,10 +1,10 @@
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
 
-use crate::util;
+use crate::dyn_result::DynResult;
+use crate::runner;
+
+runner!();
 
 struct UnionFind {
     parent: Vec<usize>,
@@ -31,25 +31,58 @@ impl UnionFind {
 
 type JunctionPos = (u64, u64, u64);
 
-fn parse_position(string: &str) -> JunctionPos {
-    let offsets: Vec<_> = string.split(',').map(|s| s.parse().unwrap()).collect();
+fn parse_position(string: &str) -> DynResult<JunctionPos> {
+    let offsets: Vec<_> = string
+        .split(',')
+        .map(|s| s.parse::<u64>())
+        .collect::<Result<_, _>>()?;
 
-    (offsets[0], offsets[1], offsets[2])
+    Ok((offsets[0], offsets[1], offsets[2]))
+}
+fn parse(input: &str) -> DynResult<(u64, u64)> {
+    let junctions: Vec<_> = input
+        .lines()
+        .map(parse_position)
+        .collect::<Result<_, _>>()?;
+
+    let mut closest_distances = calculate_junction_distances(&junctions);
+    let mut circuits = UnionFind::new(junctions.len());
+
+    for _ in 0..1000 {
+        let Some(Reverse((_, (p1, p2)))) = closest_distances.pop() else {
+            return Err("Not enough connections to do part 1".into());
+        };
+
+        circuits.union(p1, p2);
+    }
+
+    let mut sizes = vec![0; junctions.len()];
+    for i in 0..junctions.len() {
+        let p = circuits.find(i);
+        sizes[p] += 1;
+    }
+    sizes.sort();
+    let part1 = sizes.iter().rev().take(3).product();
+
+    let mut part2 = 0;
+    loop {
+        let Some(Reverse((_, (p1, p2)))) = closest_distances.pop() else {
+            break;
+        };
+
+        if circuits.find(p1) == circuits.find(p2) {
+            continue;
+        }
+
+        circuits.union(p1, p2);
+        part2 = junctions[p1].0 * junctions[p2].0;
+    }
+
+    Ok((part1, part2))
 }
 
 fn distance_sq(p1: JunctionPos, p2: JunctionPos) -> u64 {
     p1.0.abs_diff(p2.0).pow(2) + p1.1.abs_diff(p2.1).pow(2) + p1.2.abs_diff(p2.2).pow(2)
-}
-
-fn parse_input(path: &PathBuf) -> Vec<JunctionPos> {
-    let file = File::open(path).unwrap();
-    let reader = BufReader::new(file);
-    let lines = reader.lines();
-
-    lines
-        .map(|l| l.unwrap())
-        .map(|l| parse_position(l.as_str()))
-        .collect()
 }
 fn calculate_junction_distances(
     junctions: &Vec<JunctionPos>,
@@ -61,50 +94,10 @@ fn calculate_junction_distances(
         .collect::<BinaryHeap<_>>()
 }
 
-pub fn part1(path: &PathBuf) -> util::Result<String> {
-    let junctions: Vec<_> = parse_input(path);
-    let mut closest_distances = calculate_junction_distances(&junctions);
-
-    let mut circuits = UnionFind::new(junctions.len());
-
-    for _ in 0..1000 {
-        let Reverse((_, (p1, p2))) = closest_distances.pop().unwrap();
-
-        circuits.union(p1, p2);
-    }
-
-    let mut sizes = vec![0; junctions.len()];
-
-    for i in 0..junctions.len() {
-        let p = circuits.find(i);
-        sizes[p] += 1;
-    }
-    sizes.sort();
-    let result: u64 = sizes.iter().rev().take(3).product();
-
-    Ok(result.to_string())
+pub fn part1(input: &(u64, u64)) -> u64 {
+    input.0
 }
 
-pub fn part2(path: &PathBuf) -> util::Result<String> {
-    let junctions: Vec<_> = parse_input(path);
-    let mut closest_distances = calculate_junction_distances(&junctions);
-
-    let mut circuits = UnionFind::new(junctions.len());
-
-    let mut result = 0;
-
-    loop {
-        let Some(Reverse((_, (p1, p2)))) = closest_distances.pop() else {
-            break;
-        };
-
-        if circuits.find(p1) == circuits.find(p2) {
-            continue;
-        }
-
-        circuits.union(p1, p2);
-        result = junctions[p1].0 * junctions[p2].0;
-    }
-
-    Ok(result.to_string())
+pub fn part2(input: &(u64, u64)) -> u64 {
+    input.1
 }

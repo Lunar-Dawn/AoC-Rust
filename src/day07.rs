@@ -1,17 +1,18 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
+use crate::dyn_result::DynResult;
+use crate::runner;
 
-use crate::util;
+runner!();
 
-pub fn solve(path: &PathBuf) -> (usize, usize) {
-    let file = File::open(path).unwrap();
-    let reader = BufReader::new(file);
-    let mut lines = reader.lines();
+fn parse(input: &str) -> DynResult<(usize, usize)> {
+    let mut lines = input.lines();
 
-    let first_row = lines.next().unwrap().unwrap();
+    let Some(first_row) = lines.next() else {
+        return Err("No lines found!".into());
+    };
     let width = first_row.len();
-    let start_pos = first_row.find('S').unwrap();
+    let Some(start_pos) = first_row.find('S') else {
+        return Err("No start position found!".into());
+    };
 
     let mut num_splits = 0;
 
@@ -19,8 +20,6 @@ pub fn solve(path: &PathBuf) -> (usize, usize) {
     state[start_pos] = 1;
 
     for line in lines {
-        let line = line.unwrap();
-
         for (i, c) in line.chars().enumerate() {
             if state[i] == 0 || c != '^' {
                 continue;
@@ -34,13 +33,13 @@ pub fn solve(path: &PathBuf) -> (usize, usize) {
         }
     }
 
-    (num_splits, state.iter().sum())
+    Ok((num_splits, state.iter().sum()))
 }
 
-pub fn part1(path: &PathBuf) -> util::Result<String> {
-    Ok(solve(path).0.to_string())
+fn part1(result: &(usize, usize)) -> usize {
+    result.0
 }
 
-pub fn part2(path: &PathBuf) -> util::Result<String> {
-    Ok(solve(path).1.to_string())
+fn part2(result: &(usize, usize)) -> usize {
+    result.1
 }

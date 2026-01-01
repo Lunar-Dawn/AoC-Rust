@@ -1,6 +1,7 @@
-use std::path::Path;
+use std::fs::read_to_string;
 use std::process;
 
+mod runner;
 mod util;
 
 mod day01;
@@ -15,32 +16,20 @@ mod day09;
 mod day10;
 mod day11;
 mod day12;
-
-fn run(part1: util::Part, part2: util::Part, file_name: String) {
-    let path = Path::new("input").join(file_name);
-    match part1(&path) {
-        Ok(result) => println!("Part 1: {}", result),
-        Err(error) => println!("Part 1 Error: {}", error),
-    }
-    match part2(&path) {
-        Ok(result) => println!("Part 2: {}", result),
-        Err(error) => println!("Part 2 Error: {}", error),
-    }
-}
+mod dyn_result;
 
 macro_rules! days {
     ($($x:ident),+) => {
-
         vec![
             $(
-                ($x::part1, $x::part2),
+                $x::run,
             )+
         ]
     };
 }
 
 fn main() {
-    let days: Vec<(util::Part, util::Part)> =
+    let days: Vec<_> =
         days!(day01, day02, day03, day04, day05, day06, day07, day08, day09, day10, day11, day12);
 
     let args: Vec<String> = std::env::args().collect();
@@ -59,8 +48,9 @@ fn main() {
 
     for i in 0..days.len() {
         if all || day == i + 1 {
-            let (part1, part2) = days[i];
-            run(part1, part2, format!("day{}.txt", i + 1));
+            let input = read_to_string(format!("input/day{}.txt", i + 1)).unwrap();
+            let (answer1, answer2) = days[i](&input);
+            println!("Part 1: {answer1}\nPart 2: {answer2}");
         }
     }
 }

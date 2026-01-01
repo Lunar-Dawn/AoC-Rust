@@ -1,10 +1,13 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
+use crate::dyn_result::DynResult;
+use crate::runner;
 
-use crate::util;
+runner!();
 
-fn calculate_joltage(bank: String, num_digits: usize) -> u64 {
+fn parse(input: &str) -> DynResult<Vec<&str>> {
+    Ok(input.lines().collect())
+}
+
+fn calculate_joltage(bank: &str, num_digits: usize) -> u64 {
     let mut total = 0;
     let mut start_pos = 0;
 
@@ -17,34 +20,16 @@ fn calculate_joltage(bank: String, num_digits: usize) -> u64 {
             .unwrap();
 
         start_pos += pos + 1;
-        total = total * 10 + value as u64 - 0x30
+        total = total * 10 + value as u64 - ('0' as u64)
     }
 
     total
 }
 
-pub fn part1(path: &PathBuf) -> util::Result<String> {
-    let file = File::open(path)?;
-    let reader = BufReader::new(file);
-
-    let jolts: u64 = reader
-        .lines()
-        .map(|l| l.unwrap())
-        .map(|l| calculate_joltage(l, 2))
-        .sum();
-
-    Ok(jolts.to_string())
+fn part1(banks: &Vec<&str>) -> u64 {
+    banks.iter().map(|l| calculate_joltage(l, 2)).sum()
 }
 
-pub fn part2(path: &PathBuf) -> util::Result<String> {
-    let file = File::open(path)?;
-    let reader = BufReader::new(file);
-
-    let jolts: u64 = reader
-        .lines()
-        .map(|l| l.unwrap())
-        .map(|l| calculate_joltage(l, 12))
-        .sum();
-
-    Ok(jolts.to_string())
+fn part2(banks: &Vec<&str>) -> u64 {
+    banks.iter().map(|l| calculate_joltage(l, 12)).sum()
 }

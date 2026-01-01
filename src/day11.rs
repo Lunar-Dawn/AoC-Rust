@@ -1,9 +1,51 @@
-use crate::util;
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
 use std::rc::Rc;
+
+use crate::dyn_result::DynResult;
+use crate::runner;
+
+runner!();
+
+fn parse(input: &str) -> DynResult<HashMap<String, Rc<Server>>> {
+    let lines = input.lines();
+
+    let mut raw_servers: HashMap<_, _> = lines.map(|s| parse_line(s)).collect::<Result<_, _>>()?;
+
+    let mut servers = HashMap::new();
+    servers.insert(
+        "out".to_string(),
+        Rc::new(Server {
+            name: "out".to_string(),
+            outputs: None,
+        }),
+    );
+
+    while !raw_servers.is_empty() {
+        let Some((name, outputs)) = raw_servers
+            .extract_if(|_, v| v.iter().all(|o| servers.contains_key(o)))
+            .next()
+        else {
+            return Err("Could not connect servers to their destinations".into());
+        };
+
+        let server = Rc::new(Server {
+            name: name.to_string(),
+            outputs: Some(outputs.iter().map(|s| servers[s].clone()).collect()),
+        });
+        servers.insert(name.to_string(), server);
+    }
+
+    Ok(servers)
+}
+fn parse_line(line: &str) -> DynResult<(String, Vec<String>)> {
+    let mut split = line.split_whitespace().map(|s| s.to_string());
+    let Some(name) = split.next() else {
+        return Err(format!("Line appears to be empty, failed to get name {line}").into());
+    };
+    let name = &name[0..name.len() - 1];
+
+    Ok((name.to_string(), split.collect()))
+}
 
 struct Server {
     name: String,
@@ -54,58 +96,10 @@ impl Server {
     }
 }
 
-fn read_server_line(line: &str) -> (String, Vec<String>) {
-    let mut split = line.split_whitespace().map(|s| s.to_string());
-    let name = split.next().unwrap();
-    let name = &name[0..name.len() - 1];
-
-    (name.to_string(), split.collect())
-}
-fn read_servers(path: &PathBuf) -> util::Result<HashMap<String, Rc<Server>>> {
-    let file = File::open(path)?;
-    let reader = BufReader::new(file);
-    let lines: Vec<_> = reader.lines().map(|l| l.unwrap()).collect();
-
-    let mut raw_servers: HashMap<_, _> =
-        lines.iter().map(|s| read_server_line(s.as_str())).collect();
-
-    let mut servers = HashMap::new();
-    servers.insert(
-        "out".to_string(),
-        Rc::new(Server {
-            name: "out".to_string(),
-            outputs: None,
-        }),
-    );
-
-    while !raw_servers.is_empty() {
-        let (name, outputs) = raw_servers
-            .extract_if(|_, v| v.iter().all(|o| servers.contains_key(o)))
-            .next()
-            .unwrap();
-
-        let server = Rc::new(Server {
-            name: name.to_string(),
-            outputs: Some(outputs.iter().map(|s| servers[s].clone()).collect()),
-        });
-        servers.insert(name.to_string(), server);
-    }
-
-    Ok(servers)
+fn part1(servers: &HashMap<String, Rc<Server>>) -> u64 {
+    servers["you"].calc_paths_to_out(true, true, &mut HashMap::new())
 }
 
-pub fn part1(path: &PathBuf) -> util::Result<String> {
-    let servers = read_servers(&path)?;
-
-    let total = servers["you"].calc_paths_to_out(true, true, &mut HashMap::new());
-
-    Ok(total.to_string())
-}
-
-pub fn part2(path: &PathBuf) -> util::Result<String> {
-    let servers = read_servers(&path)?;
-
-    let total = servers["svr"].calc_paths_to_out(false, false, &mut HashMap::new());
-
-    Ok(total.to_string())
+fn part2(servers: &HashMap<String, Rc<Server>>) -> u64 {
+    servers["svr"].calc_paths_to_out(false, false, &mut HashMap::new())
 }

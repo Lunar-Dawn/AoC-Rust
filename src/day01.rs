@@ -1,53 +1,40 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
+use crate::dyn_result::DynResult;
+use crate::runner;
 
-use crate::util;
+runner!();
 
-pub fn part1(path: &PathBuf) -> util::Result<String> {
-    let file = File::open(path)?;
-    let reader = BufReader::new(file);
+fn parse_line(line: &str) -> DynResult<i64> {
+    let direction = match &line.chars().nth(0) {
+        Some('L') => -1,
+        _ => 1,
+    };
+    Ok(direction * &line[1..].parse::<i64>()?)
+}
+fn parse(input: &str) -> DynResult<Vec<i64>> {
+    input.lines().map(parse_line).collect()
+}
 
+fn part1(instructions: &Vec<i64>) -> u64 {
     let mut total = 0;
     let mut position = 50;
 
-    for line in reader.lines() {
-        let line = line?;
-
-        let direction = match &line.chars().nth(0) {
-            Some('L') => -1,
-            _ => 1,
-        };
-        let steps = direction * str::parse::<i32>(&line[1..])?;
-
-        position = (position + steps).rem_euclid(100);
+    for instruction in instructions {
+        position = (position + instruction).rem_euclid(100);
         if position == 0 {
             total += 1;
         }
     }
 
-    Ok(total.to_string())
+    total
 }
 
-#[allow(unused_variables)]
-pub fn part2(path: &PathBuf) -> util::Result<String> {
-    let file = File::open(path)?;
-    let reader = BufReader::new(file);
-
+fn part2(instructions: &Vec<i64>) -> u64 {
     let mut total = 0;
     let mut position = 50;
 
-    for line in reader.lines() {
-        let line = line?;
-
-        let direction: i32 = match &line.chars().nth(0) {
-            Some('L') => -1,
-            _ => 1,
-        };
-        let steps = str::parse::<i32>(&line[1..])?;
-
-        for _ in 0..steps {
-            position = (position + direction).rem_euclid(100);
+    for instruction in instructions {
+        for _ in 0..instruction.abs() {
+            position = (position + instruction.signum()).rem_euclid(100);
 
             if position == 0 {
                 total += 1;
@@ -55,5 +42,5 @@ pub fn part2(path: &PathBuf) -> util::Result<String> {
         }
     }
 
-    Ok(total.to_string())
+    total
 }

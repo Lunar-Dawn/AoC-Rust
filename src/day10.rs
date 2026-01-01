@@ -1,10 +1,17 @@
-use crate::util;
-use good_lp::{highs, variable, Expression, ProblemVariables, Solution, SolverModel};
 use std::cmp::min;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
 
+use good_lp::{highs, variable, Expression, ProblemVariables, Solution, SolverModel};
+
+use crate::dyn_result::DynResult;
+use crate::runner;
+
+runner!();
+
+struct Machine {
+    target_state: u32,
+    operations: Vec<u32>,
+    target_joltages: Vec<u32>,
+}
 fn parse_target_state(s: &str) -> u32 {
     let bits = s[1..s.len() - 1].chars().rev().map(|c| c == '#');
 
@@ -14,37 +21,42 @@ fn parse_target_state(s: &str) -> u32 {
     }
     ret
 }
-fn parse_operation(s: &str) -> u32 {
-    let positions = s[1..s.len() - 1]
-        .split(',')
-        .map(|s| s.parse::<u64>().unwrap());
+fn parse_operation(s: &str) -> DynResult<u32> {
+    let positions = s[1..s.len() - 1].split(',').map(|s| s.parse::<u64>());
 
     let mut ret = 0;
     for pos in positions {
-        ret = ret | (1 << pos);
+        ret = ret | (1 << pos?);
     }
-    ret
+    Ok(ret)
 }
-fn parse_taget_joltages(s: &str) -> Vec<u32> {
-    s[1..s.len() - 1]
+fn parse_taget_joltages(s: &str) -> DynResult<Vec<u32>> {
+    Ok(s[1..s.len() - 1]
         .split(',')
-        .map(|s| s.parse().unwrap())
-        .collect()
+        .map(|s| s.parse::<u32>())
+        .collect::<Result<_, _>>()?)
 }
 
-fn parse_line(s: &str) -> (u32, Vec<u32>, Vec<u32>) {
-    let parts: Vec<_> = s.split(' ').peekable().collect();
+fn parse_line(s: &str) -> DynResult<Machine> {
+    let parts: Vec<_> = s.split(' ').collect();
 
     let target_state = parse_target_state(parts[0]);
 
     let operations = parts[1..parts.len() - 1]
         .iter()
         .map(|s| parse_operation(s))
-        .collect();
+        .collect::<Result<_, _>>()?;
 
-    let target_joltages = parse_taget_joltages(parts.last().unwrap());
+    let target_joltages = parse_taget_joltages(parts.last().unwrap())?;
 
-    (target_state, operations, target_joltages)
+    Ok(Machine {
+        target_state,
+        operations,
+        target_joltages,
+    })
+}
+fn parse(input: &str) -> DynResult<Vec<Machine>> {
+    input.lines().map(parse_line).collect()
 }
 
 fn try_buttons(goal: u32, buttons: &[u32], state: u32, num_pressed: u32) -> u32 {
@@ -63,39 +75,18 @@ fn try_buttons(goal: u32, buttons: &[u32], state: u32, num_pressed: u32) -> u32 
         try_buttons(goal, buttons, state ^ button, num_pressed + 1),
     )
 }
-fn min_presses(goal: u32, buttons: &[u32]) -> u32 {
-    try_buttons(goal, buttons, 0, 0)
+fn min_presses(machine: &Machine) -> u32 {
+    try_buttons(machine.target_state, machine.operations.as_slice(), 0, 0)
 }
 
-pub fn part1(path: &PathBuf) -> util::Result<String> {
-    let file = File::open(path)?;
-    let reader = BufReader::new(file);
-    let lines = reader.lines();
-
-    let mut total_presses = 0;
-    for l in lines {
-        let line = l?;
-
-        let mut split = line.split(" ").peekable();
-
-        let goal = parse_target_state(split.next().unwrap());
-        let buttons: Vec<_> = split
-            .by_ref()
-            .take_while(|s| s.chars().next().unwrap() == '(')
-            .map(parse_operation)
-            .collect();
-
-        total_presses += min_presses(goal, &buttons[..]);
-    }
-
-    Ok(total_presses.to_string())
+fn part1(machines: &Vec<Machine>) -> u32 {
+    machines.iter().map(min_presses).sum()
 }
 
-pub(crate) fn solve_row(line: &str) -> u32 {
-    let (_, operations, target_joltages) = parse_line(line);
-
+fn solve_row(machine: &Machine) -> u32 {
     let mut vars = ProblemVariables::new();
-    let button_presses: Vec<_> = operations
+    let button_presses: Vec<_> = machine
+        .operations
         .iter()
         .map(|_| vars.add(variable().min(0).integer()))
         .collect();
@@ -104,10 +95,10 @@ pub(crate) fn solve_row(line: &str) -> u32 {
         .minimise(button_presses.iter().sum::<Expression>())
         .using(highs);
 
-    for (target_index, &target) in target_joltages.iter().enumerate() {
-        let mut expression = Expression::with_capacity(target_joltages.len());
+    for (target_index, &target) in machine.target_joltages.iter().enumerate() {
+        let mut expression = Expression::with_capacity(machine.target_joltages.len());
 
-        for (button_index, button) in operations.iter().enumerate() {
+        for (button_index, button) in machine.operations.iter().enumerate() {
             if button & (1 << target_index) != 0 {
                 expression += button_presses[button_index];
             }
@@ -123,15 +114,6 @@ pub(crate) fn solve_row(line: &str) -> u32 {
         .sum::<f64>() as u32
 }
 
-pub fn part2(path: &PathBuf) -> util::Result<String> {
-    let file = File::open(path)?;
-    let reader = BufReader::new(file);
-    let lines = reader.lines();
-
-    let result: u32 = lines
-        .map(|l| l.unwrap())
-        .map(|l| solve_row(l.as_str()))
-        .sum();
-
-    Ok(result.to_string())
+fn part2(machines: &Vec<Machine>) -> u32 {
+    machines.iter().map(solve_row).sum()
 }
