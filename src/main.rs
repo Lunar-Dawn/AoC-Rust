@@ -48,7 +48,7 @@ fn main() {
 
     for i in 0..days.len() {
         if all || day == i + 1 {
-            let input = read_to_string(format!("input/day{}.txt", i + 1)).unwrap();
+            let input = read_to_string(format!("input/2025/day{:02}.txt", i + 1)).unwrap();
             let (answer1, answer2) = days[i](&input);
             println!("Part 1: {answer1}\nPart 2: {answer2}");
         }
