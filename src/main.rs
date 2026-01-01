@@ -3,10 +3,11 @@ use std::process;
 
 mod util;
 
+mod aoc2024;
 mod aoc2025;
 
 fn main() {
-    let years = [(2025, aoc2025::solutions())];
+    let years = [(2024, aoc2024::solutions()), (2025, aoc2025::solutions())];
 
     let args: Vec<String> = std::env::args().collect();
 
