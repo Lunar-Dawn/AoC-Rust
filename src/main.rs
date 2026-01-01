@@ -28,21 +28,20 @@ fn run(part1: util::Part, part2: util::Part, file_name: String) {
     }
 }
 
+macro_rules! days {
+    ($($x:ident),+) => {
+
+        vec![
+            $(
+                ($x::part1, $x::part2),
+            )+
+        ]
+    };
+}
+
 fn main() {
-    let days: [(util::Part, util::Part); _] = [
-        (day01::part1, day01::part2),
-        (day02::part1, day02::part2),
-        (day03::part1, day03::part2),
-        (day04::part1, day04::part2),
-        (day05::part1, day05::part2),
-        (day06::part1, day06::part2),
-        (day07::part1, day07::part2),
-        (day08::part1, day08::part2),
-        (day09::part1, day09::part2),
-        (day10::part1, day10::part2),
-        (day11::part1, day11::part2),
-        (day12::part1, day12::part2),
-    ];
+    let days: Vec<(util::Part, util::Part)> =
+        days!(day01, day02, day03, day04, day05, day06, day07, day08, day09, day10, day11, day12);
 
     let args: Vec<String> = std::env::args().collect();
 
