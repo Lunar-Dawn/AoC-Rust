@@ -1,4 +1,8 @@
-use crate::dyn_result::DynResult;
+mod dyn_result;
+mod runner;
+mod year;
+
+pub use dyn_result::DynResult;
 
 pub fn parse_range(s: &str) -> DynResult<(u64, u64)> {
     let mut parts = s.split('-');

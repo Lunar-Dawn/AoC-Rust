@@ -2,8 +2,8 @@ use std::cmp::min;
 
 use good_lp::{highs, variable, Expression, ProblemVariables, Solution, SolverModel};
 
-use crate::dyn_result::DynResult;
 use crate::runner;
+use crate::util::DynResult;
 
 runner!();
 

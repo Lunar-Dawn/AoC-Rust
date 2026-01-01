@@ -1,12 +1,9 @@
 use std::fs::read_to_string;
 use std::process;
 
-mod runner;
 mod util;
-mod year;
 
 mod aoc2025;
-mod dyn_result;
 
 fn main() {
     let years = [(2025, aoc2025::solutions())];

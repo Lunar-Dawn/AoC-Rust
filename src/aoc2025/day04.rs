@@ -1,8 +1,8 @@
 use std::collections::HashSet;
 use std::fmt;
 
-use crate::dyn_result::DynResult;
 use crate::runner;
+use crate::util::DynResult;
 
 runner!();
 

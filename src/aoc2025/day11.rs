@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use crate::dyn_result::DynResult;
 use crate::runner;
+use crate::util::DynResult;
 
 runner!();
 

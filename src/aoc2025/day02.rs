@@ -1,6 +1,6 @@
-use crate::dyn_result::DynResult;
 use crate::runner;
 use crate::util;
+use crate::util::DynResult;
 
 runner!();
 

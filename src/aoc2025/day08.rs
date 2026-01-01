@@ -1,8 +1,8 @@
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 
-use crate::dyn_result::DynResult;
 use crate::runner;
+use crate::util::DynResult;
 
 runner!();
 
