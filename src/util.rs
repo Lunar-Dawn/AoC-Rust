@@ -2,6 +2,11 @@ mod dyn_result;
 mod runner;
 mod year;
 
+pub mod grid;
+mod impl_operators;
+pub mod point2i;
+pub mod vec2i;
+
 pub use dyn_result::DynResult;
 
 pub fn parse_range(s: &str) -> DynResult<(u64, u64)> {
