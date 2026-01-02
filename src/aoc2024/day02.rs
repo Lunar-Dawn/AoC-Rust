@@ -1,3 +1,5 @@
+use std::iter;
+
 use crate::runner;
 use crate::util::DynResult;
 
@@ -35,22 +37,22 @@ fn is_valid_with_skip(report: &Vec<i64>) -> bool {
         return true;
     }
 
-    // You can definitely stick a couple of chains over slices together so not to do any data shuffling,
-    // but I would have to measure if the performance even is better then.
-    // The reports are all pretty short after all.
-    let mut edited_report = vec![0; report.len() - 1];
+    // I suspect that since the reports are so short the iterator creation overhead is slower
+    // than the data shuffling of the previous version. But this was fun and experimenting more
+    // with iterators is valuable.
+    //
+    // And if for some reason I want to analyze reports with 10'000 values this is likely faster.
     for i in 0..report.len() - 1 {
-        for j in 0..i {
-            edited_report[j] = report[j];
-        }
+        let left = report[0..i].iter();
+        let merged = report[i] + report[i + 1];
+        let merged_it = iter::once(&merged);
+        let right = report[i + 2..].iter();
 
-        edited_report[i] = report[i] + report[i + 1];
-
-        for j in (i + 1)..report.len() - 1 {
-            edited_report[j] = report[j + 1];
-        }
-
-        if is_valid(&edited_report) {
+        if left
+            .chain(merged_it)
+            .chain(right)
+            .all(|l| l.signum() == merged.signum() && l.abs() >= 1 && l.abs() <= 3)
+        {
             return true;
         }
     }
