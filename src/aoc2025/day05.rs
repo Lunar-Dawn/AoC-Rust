@@ -1,8 +1,7 @@
 use std::cmp::max;
 
 use crate::runner;
-use crate::util;
-use crate::util::DynResult;
+use crate::util::{parse, DynResult};
 
 runner!();
 
@@ -16,7 +15,7 @@ fn parse(input: &str) -> DynResult<Input> {
     let raw_ranges = lines
         .by_ref()
         .take_while(|l| !l.is_empty())
-        .map(util::parse_range)
+        .map(parse::parse_range)
         .collect::<Result<_, _>>()?;
 
     let fresh_ranges = combine_ranges(raw_ranges);

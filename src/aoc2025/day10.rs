@@ -3,7 +3,7 @@ use std::cmp::min;
 use good_lp::{highs, variable, Expression, ProblemVariables, Solution, SolverModel};
 
 use crate::runner;
-use crate::util::DynResult;
+use crate::util::{parse, DynResult};
 
 runner!();
 
@@ -22,19 +22,16 @@ fn parse_target_state(s: &str) -> u32 {
     ret
 }
 fn parse_operation(s: &str) -> DynResult<u32> {
-    let positions = s[1..s.len() - 1].split(',').map(|s| s.parse::<u64>());
+    let positions: Vec<u32> = parse::parse_split_char(&s[1..s.len() - 1], ',')?;
 
     let mut ret = 0;
     for pos in positions {
-        ret = ret | (1 << pos?);
+        ret = ret | (1 << pos);
     }
     Ok(ret)
 }
 fn parse_taget_joltages(s: &str) -> DynResult<Vec<u32>> {
-    Ok(s[1..s.len() - 1]
-        .split(',')
-        .map(|s| s.parse::<u32>())
-        .collect::<Result<_, _>>()?)
+    Ok(parse::parse_split_char(&s[1..s.len() - 1], ',')?)
 }
 
 fn parse_line(s: &str) -> DynResult<Machine> {

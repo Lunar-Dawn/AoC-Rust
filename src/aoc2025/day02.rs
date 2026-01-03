@@ -1,11 +1,10 @@
 use crate::runner;
-use crate::util;
-use crate::util::DynResult;
+use crate::util::{parse, DynResult};
 
 runner!();
 
 fn parse(input: &str) -> DynResult<Vec<(u64, u64)>> {
-    input.trim().split(',').map(util::parse_range).collect()
+    input.trim().split(',').map(parse::parse_range).collect()
 }
 
 fn part1(ranges: &Vec<(u64, u64)>) -> u64 {

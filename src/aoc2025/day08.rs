@@ -2,6 +2,7 @@ use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 
 use crate::runner;
+use crate::util::parse::parse_split_char;
 use crate::util::DynResult;
 
 runner!();
@@ -32,10 +33,7 @@ impl UnionFind {
 type JunctionPos = (u64, u64, u64);
 
 fn parse_position(string: &str) -> DynResult<JunctionPos> {
-    let offsets: Vec<_> = string
-        .split(',')
-        .map(|s| s.parse::<u64>())
-        .collect::<Result<_, _>>()?;
+    let offsets: Vec<_> = parse_split_char(string, ',')?;
 
     Ok((offsets[0], offsets[1], offsets[2]))
 }

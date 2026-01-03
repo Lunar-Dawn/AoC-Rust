@@ -1,7 +1,7 @@
 use std::cmp::{max, min};
 
 use crate::runner;
-use crate::util::DynResult;
+use crate::util::{parse, DynResult};
 
 runner!();
 
@@ -19,10 +19,7 @@ impl Point {
     }
 }
 fn parse_point(string: &str) -> DynResult<Point> {
-    let offsets: Vec<_> = string
-        .split(',')
-        .map(|s| s.parse::<i64>())
-        .collect::<Result<_, _>>()?;
+    let offsets: Vec<_> = parse::parse_split_char(string, ',')?;
 
     Ok(Point::new(offsets[0], offsets[1]))
 }
