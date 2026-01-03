@@ -5,12 +5,17 @@ macro_rules! year {
             mod $x;
         )+
 
-        pub fn solutions() -> Vec<fn(&str) -> (String, String)> {
-            vec![
-                $(
-                    $x::run,
-                )+
-            ]
+        use crate::util::Solution;
+        use crate::util::YearSolutions;
+
+        pub fn solutions() -> YearSolutions {
+            let mut i = 0;
+            let mut ret = YearSolutions::new();
+            $(
+                i += 1;
+                ret.insert(i, $x::run as Solution);
+            )+
+            ret
         }
     }
 }
