@@ -1,9 +1,13 @@
+use std::collections::{HashSet, VecDeque};
+use std::ops::DerefMut;
+use std::sync::{Arc, Condvar, Mutex};
+use std::thread;
+
 use crate::runner;
 use crate::util::grid::{Grid, VectorGrid};
 use crate::util::point2i::Point2i;
 use crate::util::vec2i::Vec2i;
 use crate::util::DynResult;
-use std::collections::HashSet;
 
 runner!();
 
@@ -19,6 +23,8 @@ fn find_start(lines: &Vec<&str>) -> Result<Point2i, &'static str> {
     }
     Err("No starting position found")
 }
+
+type WorkerQueue = (Mutex<(VecDeque<(Point2i, usize)>, bool)>, Condvar);
 fn parse(input: &str) -> DynResult<ParsedData> {
     let lines: Vec<_> = input.lines().collect();
 
@@ -32,17 +38,64 @@ fn parse(input: &str) -> DynResult<ParsedData> {
         .flat_map(|l| l.chars().map(|c| c == '#'))
         .collect();
 
-    let grid = VectorGrid::from(width, height, data);
+    let grid = Arc::new(VectorGrid::from(width, height, data));
 
-    Ok(simulate(&grid, start))
+    let queue = Arc::new((Mutex::new((VecDeque::new(), false)), Condvar::new()));
+
+    let mut threads = Vec::new();
+
+    for _ in 0..4 {
+        let grid = grid.clone();
+        let queue = queue.clone();
+        threads.push(thread::spawn(move || obstacle_worker(grid, queue)))
+    }
+
+    let part1 = simulate(&grid, start, &queue);
+    let part2 = threads.into_iter().map(|t| t.join().unwrap()).sum();
+
+    Ok((part1, part2))
+}
+
+fn obstacle_worker(grid: Arc<VectorGrid<bool>>, queue: Arc<WorkerQueue>) -> usize {
+    let cond = &queue.1;
+    let queue = &queue.0;
+
+    let mut result = 0;
+
+    loop {
+        let (pos, dir) = match cond
+            .wait_while(queue.lock().unwrap(), |(q, kill)| {
+                if q.is_empty() {
+                    !*kill
+                } else {
+                    false
+                }
+            })
+            .unwrap()
+            .deref_mut()
+        {
+            (q, true) => {
+                if q.is_empty() {
+                    break;
+                } else {
+                    q.pop_front().unwrap()
+                }
+            }
+            (q, false) => q.pop_front().unwrap(),
+        };
+
+        if try_place_obstacle(&grid, pos, dir) {
+            result += 1;
+        }
+    }
+
+    result
 }
 
 // I am not happy with the code repetition here, but it'd be very thorny to deduplicate
-fn simulate(grid: &VectorGrid<bool>, mut pos: Point2i) -> (usize, usize) {
+fn simulate(grid: &VectorGrid<bool>, mut pos: Point2i, queue: &Arc<WorkerQueue>) -> usize {
     let mut visited = HashSet::new();
     let mut dir_i = 0;
-
-    let mut blocking_obstacles = 0;
 
     loop {
         visited.insert(pos);
@@ -52,8 +105,9 @@ fn simulate(grid: &VectorGrid<bool>, mut pos: Point2i) -> (usize, usize) {
         match grid.get(&next_pos) {
             Some(true) => dir_i = (dir_i + 1) % 4,
             Some(false) => {
-                if !visited.contains(&next_pos) && try_place_obstacle(&grid, pos, dir_i) {
-                    blocking_obstacles += 1;
+                if !visited.contains(&next_pos) {
+                    queue.0.lock().unwrap().0.push_back((pos, dir_i));
+                    queue.1.notify_one();
                 }
 
                 pos = next_pos
@@ -62,7 +116,10 @@ fn simulate(grid: &VectorGrid<bool>, mut pos: Point2i) -> (usize, usize) {
         }
     }
 
-    (visited.len(), blocking_obstacles)
+    queue.0.lock().unwrap().1 = true;
+    queue.1.notify_all();
+
+    visited.len()
 }
 fn try_place_obstacle(grid: &VectorGrid<bool>, mut pos: Point2i, mut dir_i: usize) -> bool {
     let obstacle_pos = pos + Vec2i::DIRECTIONS_CARDINAL[dir_i];
