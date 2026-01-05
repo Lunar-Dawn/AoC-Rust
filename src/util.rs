@@ -5,6 +5,7 @@ mod year;
 
 mod dyn_result;
 pub mod parse;
+pub mod threads;
 
 pub mod grid;
 mod impl_operators;
