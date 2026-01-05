@@ -1,27 +1,14 @@
+use std::cmp::Reverse;
+use std::collections::BinaryHeap;
+
 use crate::runner;
 use crate::util::DynResult;
 
 runner!();
 
-#[derive(Clone)]
 struct Block {
     length: usize,
-    data: Option<u16>,
-}
-impl Block {
-    fn checksum(&self, start: u64) -> u64 {
-        if self.data.is_none() {
-            return 0;
-        }
-
-        let len = self.length as u64;
-        let id = self.data.unwrap() as u64;
-
-        let triangle = (len * (len - 1)) / 2;
-        let rectangle = start * len;
-
-        (triangle + rectangle) * id
-    }
+    data: Option<usize>,
 }
 
 type ParsedData = Vec<Block>;
@@ -50,119 +37,103 @@ fn parse(input: &str) -> DynResult<ParsedData> {
     Ok(blocks)
 }
 
-fn part1(blocks: &ParsedData) -> u64 {
-    let mut blocks = blocks.clone();
+fn calc_checksum(start: usize, len: usize, id: usize) -> usize {
+    if len == 0 {
+        return 0;
+    }
+
+    let triangle = (len * (len - 1)) / 2;
+    let rectangle = start * len;
+
+    (triangle + rectangle) * id
+}
+
+fn part1(blocks: &ParsedData) -> usize {
+    //  The checksum of file zero is always 0, so it can just be skipped
+    let mut checksum = 0;
+    let mut pos = blocks[0].length;
 
     let mut first_free = 1;
     let mut last_full = blocks.len() - 1;
 
+    let mut free_size = blocks[first_free].length;
+    let mut full_size = blocks[last_full].length;
+
     loop {
-        if first_free >= last_full {
-            break;
-        }
-
-        let free_size = blocks[first_free].length;
-        let full_size = blocks[last_full].length;
-
         if free_size == 0 {
             first_free += 2;
+            free_size = blocks[first_free].length;
+
+            if first_free > last_full {
+                break;
+            }
+
+            let skipped = &blocks[first_free - 1];
+            checksum += calc_checksum(pos, skipped.length, skipped.data.unwrap());
+            pos += skipped.length;
+        }
+        if full_size == 0 {
+            last_full -= 2;
+            full_size = blocks[last_full].length;
+        }
+
+        let taken = full_size.min(free_size);
+
+        free_size -= taken;
+        full_size -= taken;
+
+        checksum += calc_checksum(pos, taken, blocks[last_full].data.unwrap());
+        pos += taken;
+    }
+
+    checksum += calc_checksum(pos, full_size, blocks[last_full].data.unwrap());
+
+    checksum
+}
+fn part2(blocks: &ParsedData) -> usize {
+    let mut checksum = 0;
+    let mut pos = 0;
+
+    // Starting index of blocks with free size of n, including 0 for ease of indexing
+    let mut free_blocks = vec![BinaryHeap::new(); 10];
+
+    for block in blocks {
+        if block.data.is_none() && block.length != 0 {
+            free_blocks[block.length].push(Reverse(pos));
+        }
+        pos += block.length;
+    }
+
+    for block in blocks.iter().rev() {
+        pos -= block.length;
+
+        if block.data.is_none() {
             continue;
         }
-        if free_size < full_size {
-            // We can't fit the entire rest of the block in the free space.
-            // Fill the free block and move on to the next free block
 
-            blocks[first_free].data = blocks[last_full].data;
-            blocks[last_full].length -= free_size;
+        let spot = free_blocks
+            .iter_mut()
+            .enumerate()
+            .skip(block.length)
+            .filter(|(_, v)| !v.is_empty())
+            .filter(|(_, v)| v.peek().unwrap().0 < pos)
+            .min_by(|(_, v1), (_, v2)| v1.peek().unwrap().0.cmp(&v2.peek().unwrap().0));
 
-            first_free += 2;
-        } else if free_size > full_size {
-            // The entire block fits in the free space.
-            // Move the full block before the free space and get the next full block
-
-            let full_block = blocks.remove(last_full);
-            blocks[first_free].length -= full_block.length;
-            blocks.insert(first_free, full_block);
-
-            first_free += 1;
-            last_full -= 1;
-        } else {
-            // The blocks have the same size, just swap them and move on.
-            blocks.swap(first_free, last_full);
-
-            first_free += 2;
-            last_full -= 2;
-        }
-    }
-
-    let mut sum = 0;
-    let mut pos = 0;
-    for block in blocks.into_iter() {
-        sum += block.checksum(pos);
-        pos += block.length as u64;
-    }
-
-    sum
-}
-
-fn find_file_id(blocks: &ParsedData, search_id: u16, start: usize) -> usize {
-    for i in (0..=start).rev() {
-        let block = &blocks[i];
-
-        match block.data {
-            Some(id) => {
-                if id == search_id {
-                    return i;
-                }
-            }
-            None => {}
-        }
-    }
-
-    unreachable!();
-}
-fn find_free_space(blocks: &ParsedData, size: usize, pos: usize) -> Option<usize> {
-    for i in 1..pos {
-        let block = &blocks[i];
-
-        if block.length >= size && block.data.is_none() {
-            return Some(i);
-        }
-    }
-    None
-}
-fn part2(blocks: &ParsedData) -> u64 {
-    let mut blocks = blocks.clone();
-
-    let mut search_index = blocks.len() - 1;
-
-    for file_id in (1..=blocks.last().unwrap().data.unwrap()).rev() {
-        let file_index = find_file_id(&blocks, file_id, search_index);
-        let file = &blocks[file_index];
-
-        let free_index = match find_free_space(&blocks, file.length, file_index) {
-            Some(i) => i,
-            None => continue,
+        let Some((free_size, free_vec)) = spot else {
+            checksum += calc_checksum(pos, block.length, block.data.unwrap());
+            continue;
         };
-        let free_block = &blocks[free_index];
 
-        if free_block.length == file.length {
-            blocks.swap(file_index, free_index);
-            search_index = file_index - 1;
-        } else {
-            blocks[free_index].length -= file.length;
+        let Reverse(free_pos) = free_vec.pop().unwrap();
+        checksum += calc_checksum(free_pos, block.length, block.data.unwrap());
 
-            blocks.insert(free_index, blocks[file_index].clone());
-            blocks[file_index + 1].data = None;
+        let free_size = free_size - block.length;
+
+        if free_size > 0 {
+            let free_pos = free_pos + block.length;
+            free_blocks[free_size].push(Reverse(free_pos));
         }
     }
 
-    let mut sum = 0;
-    let mut pos = 0;
-    for block in blocks.into_iter() {
-        sum += block.checksum(pos);
-        pos += block.length as u64;
-    }
-
-    sum
+    checksum
 }
