@@ -130,7 +130,10 @@ where
         };
 
         s = &s[first_to_parse..];
-        let parse_end = *&s[1..].find(|c: char| !c.is_digit(10)).unwrap_or(s.len()) + 1;
+        let parse_end = *&s[1..]
+            .find(|c: char| !c.is_digit(10))
+            .unwrap_or(s.len() - 1)
+            + 1;
 
         ret[i] = *&s[..parse_end].parse::<T>().unwrap();
         s = &s[parse_end..];
