@@ -3,14 +3,15 @@ use std::collections::BTreeMap;
 mod runner;
 mod year;
 
-mod dyn_result;
-pub mod parse;
-pub mod threads;
-
 pub mod grid;
 mod impl_operators;
 pub mod point2i;
 pub mod vec2i;
+
+mod dyn_result;
+pub mod numeric;
+pub mod parse;
+pub mod threads;
 
 pub use dyn_result::DynResult;
 pub type Solution = fn(&str) -> (String, String);

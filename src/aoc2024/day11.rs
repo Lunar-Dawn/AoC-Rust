@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::runner;
+use crate::util::numeric::{num_digits, split_digits};
 use crate::util::{parse, DynResult};
 
 runner!();
@@ -16,10 +17,8 @@ fn num_successors(number: u64, rounds: u64, cache: &mut HashMap<(u64, u64), u64>
 
     let result = if number == 0 {
         num_successors(1, rounds - 1, cache)
-    } else if (number.ilog10() + 1) % 2 == 0 {
-        let divisor = 10u64.pow((number.ilog10() + 1) / 2);
-        let left = number / divisor;
-        let right = number % divisor;
+    } else if num_digits(number) % 2 == 0 {
+        let [left, right] = split_digits(number);
 
         num_successors(left, rounds - 1, cache) + num_successors(right, rounds - 1, cache)
     } else {

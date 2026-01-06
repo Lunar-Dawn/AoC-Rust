@@ -1,4 +1,5 @@
 use crate::runner;
+use crate::util::numeric::next_power_of_10;
 use crate::util::{parse, DynResult};
 
 runner!();
@@ -40,13 +41,10 @@ fn is_valid_equation_concat(goal: u64, inputs: &[u64], sum: u64) -> bool {
 
     let next = inputs[0];
 
-    // Slightly weird equation here, so here's the explanation
-    // Concatenation is essentially left-shifting the sum and adding the rhs one.
-    // But we can't left shift in base-10, so we calculate the next power of ten above
-    // the rhs and multiply the sum by it.
-    // ilog10 gives the number of base-10 digits in a number, so we add one and raise 10 to that power
-    // to get the multiplier.
-    let concat = (10u64.pow(next.ilog10() + 1)) * sum + next;
+    // Concatenation is essentially left-shifting the lhs and adding the rhs.
+    // But we can't left shift in base-10, so we get the next power of ten above
+    // the next number, multiply the sum by it, and add the next number.
+    let concat = next_power_of_10(next) * sum + next;
 
     is_valid_equation_concat(goal, &inputs[1..], sum + next)
         || is_valid_equation_concat(goal, &inputs[1..], sum * next)

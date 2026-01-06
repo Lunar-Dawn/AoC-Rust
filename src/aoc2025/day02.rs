@@ -1,4 +1,5 @@
 use crate::runner;
+use crate::util::numeric::{num_digits, split_digits};
 use crate::util::{parse, DynResult};
 
 runner!();
@@ -12,9 +13,9 @@ fn part1(ranges: &Vec<(u64, u64)>) -> u64 {
 
     for (lower, upper) in ranges {
         for id in *lower..=*upper {
-            let divisor = 10_u64.pow((id.ilog10() + 1) / 2);
+            let [left, right] = split_digits(id);
 
-            if id / divisor == id % divisor {
+            if left == right {
                 total += id;
             }
         }
@@ -28,7 +29,7 @@ fn is_repeated(id: u64, pattern_length: u32) -> bool {
     let pattern = id % multiplier;
 
     // Check if the pattern is 0 or has leading zeroes
-    if pattern == 0 || pattern.ilog10() + 1 != pattern_length {
+    if pattern == 0 || num_digits(pattern) != pattern_length {
         return false;
     }
 
@@ -49,7 +50,7 @@ fn part2(ranges: &Vec<(u64, u64)>) -> u64 {
 
     for (lower, upper) in ranges {
         for id in *lower..=*upper {
-            let max_length = (id.ilog10() + 1) / 2;
+            let max_length = num_digits(id) / 2;
 
             for pattern_length in 1..=max_length {
                 if is_repeated(id, pattern_length) {
