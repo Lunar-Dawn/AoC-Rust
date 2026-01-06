@@ -12,6 +12,13 @@ impl Vec2i {
     pub const fn new(x: i64, y: i64) -> Vec2i {
         Vec2i { x, y }
     }
+
+    pub fn turn_clockwise(&self) -> Vec2i {
+        Vec2i::new(self.y, -self.x)
+    }
+    pub fn turn_anticlockwise(&self) -> Vec2i {
+        Vec2i::new(-self.y, self.x)
+    }
 }
 impl Vec2i {
     pub const UP: Vec2i = Vec2i::new(0, -1);
