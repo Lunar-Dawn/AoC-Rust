@@ -14,10 +14,10 @@ impl Vec2i {
     }
 
     pub fn turn_clockwise(&self) -> Vec2i {
-        Vec2i::new(self.y, -self.x)
+        Vec2i::new(-self.y, self.x)
     }
     pub fn turn_anticlockwise(&self) -> Vec2i {
-        Vec2i::new(-self.y, self.x)
+        Vec2i::new(self.y, -self.x)
     }
 }
 impl Vec2i {
