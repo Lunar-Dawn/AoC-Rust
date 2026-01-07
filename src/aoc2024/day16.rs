@@ -11,13 +11,7 @@ runner!();
 
 type ParsedData = (u64, usize);
 fn parse(input: &str) -> DynResult<ParsedData> {
-    let lines: Vec<_> = input.lines().collect();
-    let width = lines[0].len();
-    let height = lines.len();
-
-    let data = lines.iter().flat_map(|line| line.chars()).collect();
-
-    let map = VectorGrid::from(width, height, data);
+    let map = VectorGrid::from_str_vec(input.lines().collect());
 
     let start = Point2i::new(1, map.height() as i64 - 2);
     let end = Point2i::new(map.width() as i64 - 2, 1);

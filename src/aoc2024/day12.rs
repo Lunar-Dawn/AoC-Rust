@@ -55,12 +55,8 @@ fn parse_region(
 
 type ParsedData = Vec<Region>;
 fn parse(input: &str) -> DynResult<ParsedData> {
-    let lines: Vec<_> = input.lines().collect();
-    let width = lines[0].len();
-    let height = lines.len();
+    let plots = VectorGrid::from_str_vec(input.lines().collect());
 
-    let data = lines.iter().flat_map(|line| line.chars()).collect();
-    let plots = VectorGrid::from(width, height, data);
     let mut visited = VectorGrid::new(plots.width(), plots.height(), false);
 
     Ok(plots

@@ -48,16 +48,11 @@ fn calc(map: &VectorGrid<u8>, start: Point2i) -> ParsedData {
 }
 fn parse(input: &str) -> DynResult<ParsedData> {
     let lines: Vec<_> = input.lines().collect();
-    let width = lines[0].len();
-    let height = lines.len();
-
     let data = lines
         .into_iter()
-        .flat_map(|l| l.bytes())
-        .map(|c| c - b'0')
+        .map(|l| l.bytes().map(|c| c - b'0').collect())
         .collect();
-
-    let map = VectorGrid::from(width, height, data);
+    let map = VectorGrid::from_2d_vec(data);
 
     Ok(map
         .pos_iter()

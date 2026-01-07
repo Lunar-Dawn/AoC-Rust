@@ -141,7 +141,7 @@ impl Warehouse {
             })
             .collect();
 
-        let new_grid = VectorGrid::from(self.tiles.width() * 2, self.tiles.height(), data);
+        let new_grid = VectorGrid::from_vec(self.tiles.width() * 2, self.tiles.height(), data);
         Warehouse { tiles: new_grid }
     }
 }
@@ -159,19 +159,12 @@ type ParsedData = (Warehouse, Vec<Vec2i>, Point2i);
 fn parse(input: &str) -> DynResult<ParsedData> {
     let mut lines = input.lines();
 
-    let grid_lines: Vec<_> = lines.by_ref().take_while(|l| !l.is_empty()).collect();
-    let width = grid_lines[0].len();
-    let height = grid_lines.len();
-
-    let tiles = VectorGrid::from(
-        width,
-        height,
-        grid_lines
-            .into_iter()
-            .flat_map(str::chars)
-            .map(Tile::from_char)
-            .collect(),
-    );
+    let plots = lines
+        .by_ref()
+        .take_while(|l| !l.is_empty())
+        .map(|s| s.chars().map(Tile::from_char).collect())
+        .collect();
+    let tiles = VectorGrid::from_2d_vec(plots);
 
     let moves = lines.flat_map(str::chars).map(to_dir).collect();
 

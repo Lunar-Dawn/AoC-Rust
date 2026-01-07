@@ -8,16 +8,7 @@ runner!();
 
 type ParsedData = VectorGrid<char>;
 fn parse(input: &str) -> DynResult<ParsedData> {
-    let lines: Vec<_> = input.lines().collect();
-    let width = lines[0].len();
-    let height = lines.len();
-
-    let mut data = Vec::with_capacity(width * height);
-    for line in lines {
-        data.extend(line.chars());
-    }
-
-    Ok(VectorGrid::from(width, height, data))
+    Ok(VectorGrid::from_str_vec(input.lines().collect()))
 }
 
 fn test_dir(grid: &ParsedData, pos: &Point2i, dir: &Vec2i) -> bool {

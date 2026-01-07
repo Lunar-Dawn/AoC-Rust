@@ -26,17 +26,14 @@ fn find_start(lines: &Vec<&str>) -> Result<Point2i, &'static str> {
 fn parse(input: &str) -> DynResult<ParsedData> {
     let lines: Vec<_> = input.lines().collect();
 
-    let width = lines[0].len();
-    let height = lines.len();
-
     let start = find_start(&lines)?;
 
     let data = lines
         .iter()
-        .flat_map(|l| l.chars().map(|c| c == '#'))
+        .map(|l| l.chars().map(|c| c == '#').collect())
         .collect();
 
-    let grid = Arc::new(VectorGrid::from(width, height, data));
+    let grid = Arc::new(VectorGrid::from_2d_vec(data));
 
     let grid_clone = grid.clone();
     let mut pool = WorkerPool::new(

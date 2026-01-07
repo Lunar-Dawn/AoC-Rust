@@ -34,13 +34,36 @@ pub struct VectorGrid<T> {
     data: Vec<T>,
 }
 impl<T> VectorGrid<T> {
-    pub fn from(width: usize, height: usize, data: Vec<T>) -> Self {
+    pub fn from_2d_vec(vec: Vec<Vec<T>>) -> Self {
+        let width = vec[0].len();
+        let height = vec.len();
+
+        assert!(
+            vec.iter().all(|x| x.len() == width),
+            "Attempted to construct grid from vector with inconsistent string lengths."
+        );
+
+        let data = vec.into_iter().flatten().collect();
+
         Self {
             width,
             height,
             data,
         }
     }
+    pub fn from_vec(width: usize, height: usize, data: Vec<T>) -> Self {
+        assert_eq!(
+            data.len(),
+            width * height,
+            "Data size does not match indicated dimensions"
+        );
+        Self {
+            width,
+            height,
+            data,
+        }
+    }
+
     fn index(&self, pos: &Point2i) -> usize {
         self.index_xy(pos.x, pos.y)
     }
@@ -57,6 +80,25 @@ where
             width,
             height,
             data: vec![default; width * height],
+        }
+    }
+}
+impl VectorGrid<char> {
+    pub fn from_str_vec(vec: Vec<&str>) -> Self {
+        let width = vec[0].chars().count();
+        let height = vec.len();
+
+        assert!(
+            vec.iter().all(|x| x.len() == width),
+            "Attempted to construct grid from vector with inconsistent string lengths."
+        );
+
+        let data = vec.into_iter().flat_map(|s| s.chars()).collect();
+
+        Self {
+            width,
+            height,
+            data,
         }
     }
 }

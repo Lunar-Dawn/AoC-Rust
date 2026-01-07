@@ -13,13 +13,7 @@ struct Map {
 }
 type ParsedData = Map;
 fn parse(input: &str) -> DynResult<ParsedData> {
-    let lines: Vec<_> = input.lines().collect();
-
-    let width = lines[0].len();
-    let height = lines.len();
-    let data = lines.iter().flat_map(|l| l.chars()).collect();
-
-    let grid = VectorGrid::from(width, height, data);
+    let grid = VectorGrid::from_str_vec(input.lines().collect());
 
     let mut antennae = HashMap::new();
     for p in grid.pos_iter() {
