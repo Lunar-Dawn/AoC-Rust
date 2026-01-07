@@ -11,6 +11,7 @@ pub mod vec2i;
 mod dyn_result;
 pub mod numeric;
 pub mod parse;
+pub mod pathfinding;
 pub mod threads;
 
 pub use dyn_result::DynResult;
