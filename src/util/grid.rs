@@ -155,7 +155,8 @@ where
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for y in 0..self.height() as i64 {
             for x in 0..self.width() as i64 {
-                write!(f, "{}", self.get_xy(x, y).unwrap())?;
+                let e = self.get_xy(x, y).unwrap();
+                e.fmt(f)?;
             }
             writeln!(f)?;
         }
