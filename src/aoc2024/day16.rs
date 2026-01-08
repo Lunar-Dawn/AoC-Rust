@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use crate::runner;
 use crate::util::grid::{Grid, VectorGrid};
-use crate::util::pathfinding::dijkstra;
+use crate::util::pathfinding::dijkstra_all_paths;
 use crate::util::point2i::Point2i;
 use crate::util::vec2i::Vec2i;
 use crate::util::DynResult;
@@ -15,8 +15,9 @@ fn parse(input: &str) -> DynResult<ParsedData> {
 
     let start = Point2i::new(1, map.height() as i64 - 2);
     let end = Point2i::new(map.width() as i64 - 2, 1);
-    let (cost, _, nodes_from) = dijkstra(
+    let (cost, _, nodes_from) = dijkstra_all_paths(
         (start, Vec2i::RIGHT),
+        |(pos, _)| *pos == end,
         |(pos, dir)| {
             let mut ret = Vec::new();
 
@@ -28,7 +29,6 @@ fn parse(input: &str) -> DynResult<ParsedData> {
 
             ret
         },
-        |(pos, _)| *pos == end,
     )
     .unwrap();
 

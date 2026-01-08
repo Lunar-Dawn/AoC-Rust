@@ -23,6 +23,10 @@ impl Point2i {
         dx * dx + dy * dy
     }
 
+    pub fn distance_manhattan(&self, other: &Self) -> i64 {
+        (self.x - other.x).abs() + (self.y - other.y).abs()
+    }
+
     pub fn neighbours(&self) -> impl Iterator<Item = Point2i> + use<'_> {
         Vec2i::DIRECTIONS.iter().map(move |d| self + d)
     }
