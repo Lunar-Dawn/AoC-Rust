@@ -177,7 +177,7 @@ fn parse(input: &str) -> DynResult<ParsedData> {
     Ok((Warehouse { tiles }, moves, robot_pos))
 }
 
-fn part1((warehouse, moves, mut robot_pos): &ParsedData) -> i64 {
+fn part1(&(ref warehouse, ref moves, mut robot_pos): &ParsedData) -> i64 {
     let mut warehouse = warehouse.clone();
 
     for dir in moves {
@@ -188,7 +188,7 @@ fn part1((warehouse, moves, mut robot_pos): &ParsedData) -> i64 {
 
     warehouse.gps_sum()
 }
-fn part2((warehouse, moves, mut robot_pos): &ParsedData) -> i64 {
+fn part2(&(ref warehouse, ref moves, mut robot_pos): &ParsedData) -> i64 {
     let mut warehouse = warehouse.clone().widen();
     robot_pos.x *= 2;
 
