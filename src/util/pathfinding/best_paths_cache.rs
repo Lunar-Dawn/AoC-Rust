@@ -3,18 +3,18 @@ use std::hash::Hash;
 
 use super::traits::PathfindingCache;
 
-pub struct AllPathsCache<Node>
+pub struct BestPathsCache<Node>
 where
     Node: Eq + Clone + Hash,
 {
     visited_from: HashMap<Node, (u64, Vec<Node>)>,
     end_nodes: Option<(u64, Vec<Node>)>,
 }
-impl<Node> AllPathsCache<Node>
+impl<Node> BestPathsCache<Node>
 where
     Node: Eq + Clone + Hash,
 {
-    pub fn new(start: Node) -> AllPathsCache<Node> {
+    pub fn new(start: Node) -> BestPathsCache<Node> {
         let mut visited_from = HashMap::new();
         visited_from.insert(start, (0, Vec::new()));
         Self {
@@ -48,7 +48,7 @@ where
     }
 }
 
-impl<Node> PathfindingCache for AllPathsCache<Node>
+impl<Node> PathfindingCache for BestPathsCache<Node>
 where
     Node: Eq + Clone + Hash,
 {
@@ -78,7 +78,10 @@ where
             return;
         };
 
-        assert_eq!(*prev_cost, cost, "Tried to insert new end node with different cost than existing, queue order must be messed up");
+        assert_eq!(
+            *prev_cost, cost,
+            "Tried to insert new end node with different cost than existing, queue order must be messed up"
+        );
 
         set.push(node);
     }

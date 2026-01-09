@@ -2,15 +2,15 @@ use std::collections::HashMap;
 use std::hash::Hash;
 
 mod a_star_queue;
-mod all_paths_cache;
 mod best_path_cache;
+mod best_paths_cache;
 mod cost_cache;
 mod dijkstra_queue;
 mod traits;
 
 use a_star_queue::AStarQueue;
-use all_paths_cache::AllPathsCache;
 use best_path_cache::BestPathCache;
+use best_paths_cache::BestPathsCache;
 use cost_cache::CostCache;
 use dijkstra_queue::DijkstraQueue;
 use traits::{PathfindingCache, PathfindingQueue};
@@ -98,7 +98,7 @@ where
 }
 
 // Finds all the best paths to the end, and returns them all.
-pub fn dijkstra_all_paths<Node, NeighbourF, EndF>(
+pub fn dijkstra_best_paths<Node, NeighbourF, EndF>(
     start: Node,
     is_end: EndF,
     neighbours: NeighbourF,
@@ -110,7 +110,7 @@ where
 {
     let cache = run_pathfinder(
         DijkstraQueue::new(start.clone()),
-        AllPathsCache::new(start),
+        BestPathsCache::new(start),
         is_end,
         neighbours,
     );
