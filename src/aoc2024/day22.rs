@@ -1,6 +1,5 @@
 use crate::runner;
 use crate::util::DynResult;
-use std::collections::BTreeMap;
 
 runner!();
 
@@ -33,45 +32,41 @@ fn part1(monkeys: &ParsedData) -> u64 {
         .sum()
 }
 
-fn analyse_monkey(start: u32) -> BTreeMap<u32, i8> {
+const HASH_SIZE: usize = 1 << 20;
+
+fn analyse_monkey(start: u32, total_price_after: &mut [u64], seen: &mut [i16], id: i16) {
     let mut hash = 0;
-    let mut prev;
+    let mut prev_price = (start % 10) as i8;
     let mut curr = start;
 
-    let mut sell_after = BTreeMap::new();
-
     for i in 0..2000 {
-        prev = curr;
         curr = next_secret(curr);
 
         let price = (curr % 10) as i8;
-        let change = price - (prev % 10) as i8;
+        let change = price - prev_price;
+        prev_price = price;
 
         hash <<= 5;
-        hash |= (change as u32) & 0b1_1111;
+        hash |= (change as usize) & 0b1_1111;
         hash &= (1 << 20) - 1;
 
-        if i >= 3 {
-            sell_after.entry(hash).or_insert(price);
+        if i >= 3 && seen[hash] != id {
+            total_price_after[hash] += price as u64;
+            seen[hash] = id;
         }
     }
-
-    sell_after
 }
-
 fn part2(monkeys: &ParsedData) -> u64 {
-    let mut sum_at = BTreeMap::new();
+    // Two big arrays to store state between monkeys
+    let mut total_price_after = vec![0; HASH_SIZE];
+    // Storing a bool array makes more "sense", but then you have to reset it.
+    // Storing the last monkey to have seen the sequence means no resetting, since each run
+    // can just check "was it this one?"
+    let mut seen = vec![-1; HASH_SIZE];
 
-    for monkey in monkeys {
-        let sells_at = analyse_monkey(*monkey);
-
-        for (k, v) in sells_at.into_iter() {
-            sum_at
-                .entry(k)
-                .and_modify(|p| *p += v as u64)
-                .or_insert(v as u64);
-        }
+    for i in 0..monkeys.len() {
+        analyse_monkey(monkeys[i], &mut total_price_after, &mut seen, i as i16);
     }
 
-    *sum_at.values().max().unwrap()
+    *total_price_after.iter().max().unwrap()
 }
