@@ -32,10 +32,10 @@ fn part1(monkeys: &ParsedData) -> u64 {
         .sum()
 }
 
-const HASH_SIZE: usize = 1 << 20;
+const HASH_SIZE: usize = 19usize.pow(4);
 
 fn analyse_monkey(start: u32, total_price_after: &mut [u64], seen: &mut [i16], id: i16) {
-    let mut hash = 0;
+    let mut index = 0;
     let mut prev_price = (start % 10) as i8;
     let mut curr = start;
 
@@ -46,13 +46,13 @@ fn analyse_monkey(start: u32, total_price_after: &mut [u64], seen: &mut [i16], i
         let change = price - prev_price;
         prev_price = price;
 
-        hash <<= 5;
-        hash |= (change as usize) & 0b1_1111;
-        hash &= (1 << 20) - 1;
+        index %= 19usize.pow(3);
+        index *= 19;
+        index += (change + 9) as usize;
 
-        if i >= 3 && seen[hash] != id {
-            total_price_after[hash] += price as u64;
-            seen[hash] = id;
+        if i >= 3 && seen[index] != id {
+            total_price_after[index] += price as u64;
+            seen[index] = id;
         }
     }
 }
