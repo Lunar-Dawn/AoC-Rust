@@ -42,6 +42,12 @@ where
 {
     T::from(10u32).unwrap().pow(num_digits(x))
 }
+pub fn prev_power_of_10<T>(x: T) -> T
+where
+    T: ILog10<T> + num_traits::PrimInt,
+{
+    T::from(10u32).unwrap().pow(num_digits(x) - 1)
+}
 
 pub fn split_digits<const N: usize, T>(mut x: T) -> [T; N]
 where

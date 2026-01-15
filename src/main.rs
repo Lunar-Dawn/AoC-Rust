@@ -7,6 +7,7 @@ use aoc_rust::util::YearSolutions;
 
 fn main() {
     let years = BTreeMap::from([
+        (2023, aoc_rust::aoc2023::solutions()),
         (2024, aoc_rust::aoc2024::solutions()),
         (2025, aoc_rust::aoc2025::solutions()),
     ]);
